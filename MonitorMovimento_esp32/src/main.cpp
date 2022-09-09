@@ -24,7 +24,7 @@ const char *mqtt_server = "192.168.0.195";
 // unsigned long startMillis;
 // unsigned long currentMillis;
 
-#define MSG_BUFFER_SIZE	(50)
+#define MSG_BUFFER_SIZE (50)
 char msg[MSG_BUFFER_SIZE];
 
 #include "function.h"
@@ -53,7 +53,6 @@ void setup()
 
     client.setServer(mqtt_server, 1883);
     client.setCallback(callback);
-
   }
   if (WiFi.status() == WL_CONNECTED)
   {
@@ -85,7 +84,7 @@ void loop()
     Serial.print("Enviando :");
     Serial.println(resposta);
 
-    snprintf (msg, MSG_BUFFER_SIZE, "%s", resposta);
+    snprintf(msg, MSG_BUFFER_SIZE, "%s", resposta);
 
     client.publish("myTopic", msg);
     // if (client.connect("public", "public", "public"))
@@ -94,9 +93,13 @@ void loop()
     //   Serial.println(" resposta enviada");
     // }
   }
-  digitalWrite(ledB, HIGH);
-  delay(800);
-  digitalWrite(ledB, LOW);
-  delay(800);
-  Serial.print(".");
+  if (client.connect("public", "public", "public"))
+  {
+    client.subscribe("comando/led");
+  }
+  // digitalWrite(ledB, HIGH);
+  // delay(800);
+  // digitalWrite(ledB, LOW);
+  // delay(800);
+  // Serial.print(".");
 }

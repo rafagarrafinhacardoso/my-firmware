@@ -3,6 +3,8 @@
 unsigned long startMillis;
 unsigned long currentMillis;
 
+bool ledEstado = false;
+
 void messageReceived(String &topic, String &payload)
 {
   Serial.println("incoming: " + topic + " - " + payload);
@@ -97,12 +99,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println();
 
   // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1') {
-    digitalWrite(ledB, LOW);   // Turn the LED on (Note that LOW is the voltage level
+  if ((char)payload[0] == 'a') {
+    Serial.println("true");
+    digitalWrite(ledB, ledEstado);   // Turn the LED on (Note that LOW is the voltage level
+    ledEstado = !ledEstado;
     // but actually the LED is on; this is because
     // it is active low on the ESP-01)
   } else {
-    digitalWrite(ledB, HIGH);  // Turn the LED off by making the voltage HIGH
+    Serial.println("mensagem diferente");
   }
 
 }
