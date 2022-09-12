@@ -2,22 +2,21 @@
 Monitor de movimento moni-movi
 */
 #include <Arduino.h>
-
 // #include <ArduinoJson.h>
-// #include <MQTT.h>
 #include <WiFiManager.h>
-
-#define ledB 23
-
-// #include <MQTT.h>
-// MQTTClient client;
-// #include <ArduinoJson.h>
-// DynamicJsonDocument doc();
-// #include <WiFi.h>
 #include <PubSubClient.h>
 
 WiFiClient net;
 PubSubClient client(net);
+
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_SSD1306.h>
+#include <Adafruit_Sensor.h>
+
+Adafruit_MPU6050 mpu;
+Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
+
+#define ledB 23
 
 // const char *serverMqtt = "http://127.0.0.1:1880/"; http://127.0.0.1/ 192.168.0.196
 const char *mqtt_server = "192.168.0.195";
@@ -58,19 +57,32 @@ void setup()
   {
     Serial.println("INTERNET CONECTADA!");
   }
+
+  if (!mpu.begin())
+  {
+    Serial.println("Sensor init failed");
+    while (1)
+      yield();
+  }
+  Serial.println("Found a MPU-6050 sensor");
+  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
+  { // Address 0x3C for 128x64
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;)
+      ; // Don't proceed, loop forever
+  }
+  display.display();
+  delay(500); // Pause for 2 seconds
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setRotation(0);
+
   Serial.println(getMAC());
 }
 
 void loop()
 {
-  // if(client.connect("public", "public", "public")){
-  //   Serial.print("c");
-  //   Serial.print(client.subscribe("/test"));
-  // }
-  // if (!client.connected()) {
-  //   reconnect();
-  // }
-  // client.loop();
 
   if (!client.connected())
   {
@@ -78,28 +90,33 @@ void loop()
   }
   client.loop();
 
-  if (Serial.available())
-  {
-    String resposta = respostaMqtt();
-    Serial.print("Enviando :");
-    Serial.println(resposta);
+  // if (client.connect("public", "public", "public"))
+  // {
+  //   client.subscribe("comando/led");
+  // }
+  
+  sensors_event_t g, a, temp;
+  mpu.getEvent(&g, &a, &temp);
 
-    snprintf(msg, MSG_BUFFER_SIZE, "%s", resposta);
+  display.clearDisplay();
+  display.setCursor(0, 0);
 
-    client.publish("myTopic", msg);
-    // if (client.connect("public", "public", "public"))
-    // {
-    //   Serial.print(client.publish("esp/mensagem", resposta));
-    //   Serial.println(" resposta enviada");
-    // }
-  }
-  if (client.connect("public", "public", "public"))
-  {
-    client.subscribe("comando/led");
-  }
-  // digitalWrite(ledB, HIGH);
-  // delay(800);
-  // digitalWrite(ledB, LOW);
-  // delay(800);
-  // Serial.print(".");
+  display.println("Accelerometer - m/s^2");
+  display.print(a.acceleration.x, 1);
+  display.print(", ");
+  display.print(a.acceleration.y, 1);
+  display.print(", ");
+  display.print(a.acceleration.z, 1);
+  display.println("");
+
+  display.println("Gyroscope - rps");
+  display.print(g.gyro.x, 1);
+  display.print(", ");
+  display.print(g.gyro.y, 1);
+  display.print(", ");
+  display.print(g.gyro.z, 1);
+  display.println("");
+
+  display.display();
+  delay(500);
 }

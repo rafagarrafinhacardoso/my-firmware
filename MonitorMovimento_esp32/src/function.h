@@ -1,79 +1,9 @@
 #include "Arduino.h"
 
-unsigned long startMillis;
-unsigned long currentMillis;
+// unsigned long startMillis;
+// unsigned long currentMillis;
 
 bool ledEstado = false;
-
-void messageReceived(String &topic, String &payload)
-{
-  Serial.println("incoming: " + topic + " - " + payload);
-}
-
-String respostaMqtt()
-{
-  String result = "";
-  startMillis = millis();
-  // bool ledColor = true;
-  while (result == "")
-  {
-    if (Serial.available())
-    {
-      char caractere = char(Serial.read());
-      Serial.print(".");
-      if (caractere == '\n')
-        Serial.println("caractere /n");
-      else if (caractere == '\r')
-        Serial.println("caractere /r");
-      else
-        result += caractere;
-    }
-    currentMillis = millis();
-    if ((currentMillis - startMillis) >= 500) // pisca LED
-    {
-      startMillis = currentMillis;
-    }
-  }
-  startMillis = millis();
-  currentMillis = millis();
-  while ((currentMillis - startMillis) <= 1000)
-  {
-    currentMillis = millis();
-    if (Serial.available())
-    {
-      char caractere = char(Serial.read());
-      if (caractere == '\n')
-      {
-        Serial.print("Tempo Leitura: ");
-        Serial.println((currentMillis - startMillis));
-        return result;
-      }
-      else if (caractere == '\r')
-      {
-        Serial.print("caractere /r");
-        Serial.print("Tempo Leitura: ");
-        Serial.println((currentMillis - startMillis));
-        return result;
-      }
-      else
-      {
-        result += caractere;
-        startMillis = millis();
-      }
-    }
-    if ((currentMillis - startMillis) >= 1500)
-    {
-      currentMillis = millis();
-      Serial.print("(Erro )Tempo Leitura: ");
-      Serial.println((currentMillis - startMillis));
-      Serial.println(result);
-      return result;
-    }
-  }
-  // Serial.print("Sucesso resultado: ");
-  // Serial.println(result);
-  return result;
-}
 
 String getMAC()
 {
