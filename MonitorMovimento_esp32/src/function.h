@@ -31,7 +31,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   // Switch on the LED if an 1 was received as first character
   if ((char)payload[0] == 'a') {
     Serial.println("true");
-    digitalWrite(ledB, ledEstado);   // Turn the LED on (Note that LOW is the voltage level
+    // digitalWrite(ledB, ledEstado);   // Turn the LED on (Note that LOW is the voltage level
     ledEstado = !ledEstado;
     // but actually the LED is on; this is because
     // it is active low on the ESP-01)
@@ -43,7 +43,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void reconnect() {
   // Loop until we're reconnected
-  while (!client.connected()) {
+  // while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if (client.connect("arduinoClient")) {
@@ -61,5 +61,5 @@ void reconnect() {
       // Wait 5 seconds before retrying
       delay(5000);
     }
-  }
+  // }
 }
