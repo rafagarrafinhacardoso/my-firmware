@@ -10,6 +10,9 @@
         "optional": "cpp",
         "ostream": "cpp",
         "system_error": "cpp",
-        "type_traits": "cpp"
-    }
+        "type_traits": "cpp",
+        "string": "cpp",
+        "string_view": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }

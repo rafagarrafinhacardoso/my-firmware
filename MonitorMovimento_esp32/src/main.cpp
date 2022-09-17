@@ -16,6 +16,9 @@ PubSubClient client(net);
 Adafruit_MPU6050 mpu;
 Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
 
+#include <ArduinoJson.h>
+DynamicJsonDocument doc(16384);
+
 // #define ledB 23
 #define btn 23
 
@@ -24,8 +27,10 @@ const char *mqtt_server = "192.168.0.195";
 // unsigned long startMillis;
 // unsigned long currentMillis;
 
-#define MSG_BUFFER_SIZE (50)
+#define MSG_BUFFER_SIZE (500)
+#define TPC_BUFFER_SIZE (50)
 char msg[MSG_BUFFER_SIZE];
+char tpc[TPC_BUFFER_SIZE];
 
 #include "function.h"
 void setup()
@@ -80,7 +85,6 @@ void setup()
   }
   Serial.println("Found a MPU-6050 sensor");
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  
 
   Serial.println(getMAC());
 }
@@ -90,25 +94,35 @@ void loop()
 
   display.clearDisplay();
   display.setCursor(0, 0);
-  
-  // if (!client.connected())
-  // {
-  //   reconnect();
-  //   display.println("Erro conecção MQTT");
-  // }
-  // client.loop();
+
+  if (!client.connected())
+  {
+    reconnect();
+    display.println("Erro conecção MQTT");
+  }
+  client.loop();
 
   // if (client.connect("public", "public", "public"))
   // {
   //   client.subscribe("comando/led");
   // }
 
-  display.println(digitalRead(btn));
-  
+  // display.print("Estado btn: ");
+  // display.println(digitalRead(btn) ? "false" : "true");
+  if (!digitalRead(btn))
+  {
+    Serial.println("Btn precionado");
+    display.println("Btn precionado");
+
+    String serialNumber = getMAC();
+    snprintf(msg, MSG_BUFFER_SIZE, "{\"serialNumber\":\"%s\",\"status\":\"ativo test1\"}", serialNumber); // "{\"trackerId\":%d,\"height\":%d}"
+    snprintf(tpc, TPC_BUFFER_SIZE, "device/%s/status", serialNumber);
+    Serial.println(msg);
+    client.publish(tpc, msg);
+  }
+
   sensors_event_t g, a, temp;
   mpu.getEvent(&g, &a, &temp);
-
-  
 
   display.println("Accelerometer - m/s^2");
   display.print(a.acceleration.x, 1);
