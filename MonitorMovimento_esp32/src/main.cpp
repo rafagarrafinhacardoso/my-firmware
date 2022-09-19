@@ -2,43 +2,33 @@
 Monitor de movimento moni-movi
 */
 #include <Arduino.h>
-// #include <ArduinoJson.h>
 #include <WiFiManager.h>
-#include <PubSubClient.h>
+#include <PubSubClient.h> // #define MQTT_MAX_PACKET_SIZE 256
 
 WiFiClient net;
 PubSubClient client(net);
 
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_SSD1306.h>
-#include <Adafruit_Sensor.h>
 
 Adafruit_MPU6050 mpu;
 Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
 
-#include <ArduinoJson.h>
-DynamicJsonDocument doc(16384);
+// #include <ArduinoJson.h>
+// DynamicJsonDocument doc(16384);
 
-// #define ledB 23
 #define btn 23
 
-// const char *serverMqtt = "http://127.0.0.1:1880/"; http://127.0.0.1/ 192.168.0.196
-const char *mqtt_server = "192.168.0.195";
 // unsigned long startMillis;
 // unsigned long currentMillis;
 
-#define MSG_BUFFER_SIZE (500)
-#define TPC_BUFFER_SIZE (50)
-char msg[MSG_BUFFER_SIZE];
-char tpc[TPC_BUFFER_SIZE];
-
+#include "config.h"
 #include "function.h"
 void setup()
 {
   WiFiManager wm;
 
   pinMode(btn, INPUT_PULLUP);
-  // digitalWrite(btn, LOW);
   Serial.begin(115200);
   Serial.println("Start");
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
@@ -52,20 +42,25 @@ void setup()
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setRotation(0);
-
-  display.println("wifiConect");
+  // delay(500); // Pause for 2 seconds
+  // display.clearDisplay();
+  // display.setCursor(0, 0);
+  // display.println("wifiConect");
 
   bool res;
-  wm.setConfigPortalTimeout(80); // Ver Config.h
+  wm.setConfigPortalTimeout(timePortal); // 80
   res = wm.autoConnect("ESP32");
 
   if (!res)
   {
     Serial.println("Failed to WiFi connect");
+    // state = (char) "Failed WiFi connect";
+    ((String) "Failed WiFi connect").toCharArray(state, 25);
   }
   else
   {
     Serial.println("WiFi connected versao 2");
+    ((String) "WiFi connected").toCharArray(state, 25);
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
 
@@ -91,9 +86,11 @@ void setup()
 
 void loop()
 {
-
   display.clearDisplay();
   display.setCursor(0, 0);
+
+  // display.print("state: ");
+  display.println(state);
 
   if (!client.connected())
   {
@@ -102,21 +99,53 @@ void loop()
   }
   client.loop();
 
-  // if (client.connect("public", "public", "public"))
-  // {
-  //   client.subscribe("comando/led");
-  // }
-
-  // display.print("Estado btn: ");
-  // display.println(digitalRead(btn) ? "false" : "true");
   if (!digitalRead(btn))
   {
     Serial.println("Btn precionado");
     display.println("Btn precionado");
-
+    String acce_x = "";
+    String acce_y = "";
+    String acce_z = "";
+    String gyro_x = "";
+    String gyro_y = "";
+    String gyro_z = "";
+    for (int x = 0; x < sizeV; x++)
+    {
+      sensors_event_t g, a, temp;
+      mpu.getEvent(&g, &a, &temp);
+      acce_x += a.acceleration.x;
+      acce_y += a.acceleration.y;
+      acce_z += a.acceleration.z;
+      gyro_x += g.gyro.x;
+      gyro_y += g.gyro.y;
+      gyro_z += g.gyro.z;
+      if (x < (sizeV - 1))
+      {
+        acce_x += ",";
+        acce_y += ",";
+        acce_z += ",";
+        gyro_x += ",";
+        gyro_y += ",";
+        gyro_z += ",";
+      }
+      // Serial.println(a.acceleration.x);
+    }
+    Serial.println(acce_x);
     String serialNumber = getMAC();
-    snprintf(msg, MSG_BUFFER_SIZE, "{\"serialNumber\":\"%s\",\"status\":\"ativo test1\"}", serialNumber); // "{\"trackerId\":%d,\"height\":%d}"
-    snprintf(tpc, TPC_BUFFER_SIZE, "device/%s/status", serialNumber);
+    char acceX[sizeCharVector];
+    char acceY[sizeCharVector];
+    char acceZ[sizeCharVector];
+    char gyroX[sizeCharVector];
+    char gyroY[sizeCharVector];
+    char gyroZ[sizeCharVector];
+    acce_x.toCharArray(acceX, sizeCharVector);
+    acce_y.toCharArray(acceY, sizeCharVector);
+    acce_z.toCharArray(acceZ, sizeCharVector);
+    gyro_x.toCharArray(gyroX, sizeCharVector);
+    gyro_y.toCharArray(gyroY, sizeCharVector);
+    gyro_z.toCharArray(gyroZ, sizeCharVector);
+    snprintf(msg, MSG_BUFFER_SIZE, "{\"serialNumber\":\"%s\",\"acceleration\":{\"x\":[%s],\"y\":[%s],\"z\":[%s]},\"gyro\":{\"x\":[%s],\"y\":[%s],\"z\":[%s]}}", serialNumber, acceX, acceY, acceZ, gyroX, gyroY, gyroZ); // "{\"trackerId\":%d,\"height\":%d}"
+    snprintf(tpc, TPC_BUFFER_SIZE, "device/%s/movement", serialNumber);
     Serial.println(msg);
     client.publish(tpc, msg);
   }
