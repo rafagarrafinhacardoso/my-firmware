@@ -19,8 +19,8 @@ Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
 
 #define btn 23
 
-// unsigned long startMillis;
-// unsigned long currentMillis;
+unsigned long startMillis;
+unsigned long currentMillis;
 
 #include "config.h"
 #include "function.h"
@@ -43,10 +43,10 @@ void setup()
   display.setTextColor(WHITE);
   display.setRotation(0);
   // delay(500); // Pause for 2 seconds
-  // display.clearDisplay();
-  // display.setCursor(0, 0);
-  // display.println("wifiConect");
-
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println("wifiConect");
+  display.display();
   bool res;
   wm.setConfigPortalTimeout(timePortal); // 80
   res = wm.autoConnect("ESP32");
@@ -54,7 +54,6 @@ void setup()
   if (!res)
   {
     Serial.println("Failed to WiFi connect");
-    // state = (char) "Failed WiFi connect";
     ((String) "Failed WiFi connect").toCharArray(state, 25);
   }
   else
@@ -86,8 +85,10 @@ void setup()
 
 void loop()
 {
+  startMillis = millis();
   display.clearDisplay();
   display.setCursor(0, 0);
+  currentMillis = startMillis;
 
   // display.print("state: ");
   display.println(state);
@@ -96,13 +97,19 @@ void loop()
   {
     reconnect();
     display.println("Erro conecção MQTT");
+    ((String) "Erro conecção MQTT").toCharArray(state, 25);
+  }
+  else
+  {
+    ((String) "WiFi connected").toCharArray(state, 25);
   }
   client.loop();
 
   if (!digitalRead(btn))
   {
     Serial.println("Btn precionado");
-    display.println("Btn precionado");
+    display.println("Iniciando leitura");
+    display.display();
     String acce_x = "";
     String acce_y = "";
     String acce_z = "";
@@ -128,6 +135,7 @@ void loop()
         gyro_y += ",";
         gyro_z += ",";
       }
+      delay(temp_leitura);
       // Serial.println(a.acceleration.x);
     }
     Serial.println(acce_x);
@@ -148,27 +156,36 @@ void loop()
     snprintf(tpc, TPC_BUFFER_SIZE, "device/%s/movement", serialNumber);
     Serial.println(msg);
     client.publish(tpc, msg);
+    while (!digitalRead(btn))
+    {
+      display.clearDisplay();
+      display.setCursor(0, 0);
+      display.println("Leitura Finalizada");
+      display.println("Solte o botao");
+      display.display();
+      delay(500);
+    }
   }
 
-  sensors_event_t g, a, temp;
-  mpu.getEvent(&g, &a, &temp);
+  // sensors_event_t g, a, temp;
+  // mpu.getEvent(&g, &a, &temp);
 
-  display.println("Accelerometer - m/s^2");
-  display.print(a.acceleration.x, 1);
-  display.print(", ");
-  display.print(a.acceleration.y, 1);
-  display.print(", ");
-  display.print(a.acceleration.z, 1);
-  display.println("");
+  // display.println("Accelerometer - m/s^2");
+  // display.print(a.acceleration.x, 1);
+  // display.print(", ");
+  // display.print(a.acceleration.y, 1);
+  // display.print(", ");
+  // display.print(a.acceleration.z, 1);
+  // display.println("");
 
-  display.println("Gyroscope - rps");
-  display.print(g.gyro.x, 1);
-  display.print(", ");
-  display.print(g.gyro.y, 1);
-  display.print(", ");
-  display.print(g.gyro.z, 1);
-  display.println("");
+  // display.println("Gyroscope - rps");
+  // display.print(g.gyro.x, 1);
+  // display.print(", ");
+  // display.print(g.gyro.y, 1);
+  // display.print(", ");
+  // display.print(g.gyro.z, 1);
+  // display.println("");
 
   display.display();
-  delay(500);
+  // delay(500);
 }
