@@ -19,8 +19,8 @@ Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &Wire);
 
 #define btn 23
 
-unsigned long startMillis;
-unsigned long currentMillis;
+// unsigned long startMillis;
+// unsigned long currentMillis;
 
 #include "config.h"
 #include "function.h"
@@ -85,10 +85,10 @@ void setup()
 
 void loop()
 {
-  startMillis = millis();
+  // startMillis = millis();
   display.clearDisplay();
   display.setCursor(0, 0);
-  currentMillis = startMillis;
+  // currentMillis = startMillis;
 
   // display.print("state: ");
   display.println(state);
