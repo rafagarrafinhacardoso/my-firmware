@@ -65,6 +65,7 @@ void setup()
 
     client.setServer(mqtt_server, 1883);
     client.setCallback(callback);
+    client.setBufferSize(MSG_BUFFER_SIZE);
   }
   if (WiFi.status() == WL_CONNECTED)
   {
