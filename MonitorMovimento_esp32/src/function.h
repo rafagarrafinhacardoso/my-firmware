@@ -2,16 +2,16 @@
 
 bool ledEstado = false;
 
-String getMAC()
+void getMAC(char *ret)
 {
-  char ssid[23];
+  // char ssid[23];
 
   uint64_t chipid = ESP.getEfuseMac(); // The chip ID is essentially its MAC address(length: 6 bytes).
   uint16_t chip = (uint16_t)(chipid >> 32);
 
-  snprintf(ssid, 23, "%04X%08X", chip, (uint32_t)chipid);
+  snprintf(ret, 23, "%04X%08X", chip, (uint32_t)chipid);
 
-  return String(ssid);
+  // return String(ssid);
 }
 
 void callback(char *topic, byte *payload, unsigned int length)
@@ -19,20 +19,23 @@ void callback(char *topic, byte *payload, unsigned int length)
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
+  sniprintf(tpc, TPC_BUFFER_SIZE, "device/%s/mensage", serialNumber);
+  if (strcmp(tpc, topic) == 0) // if ( sub == topic ) compara char ****
+  {
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    for (int i = 0; i < length; i++)
+    {
+      display.print((char)payload[i]);
+    }
+    display.display();
+  }
   for (int i = 0; i < length; i++)
   {
     Serial.print((char)payload[i]);
   }
   Serial.println();
 
-  // Switch on the LED if an 1 was received as first character
-  // if ((char)payload[0] == 'a') {
-  //   Serial.println("true");
-  //   // but actually the LED is on; this is because
-  //   // it is active low on the ESP-01)
-  // } else {
-  //   Serial.println("mensagem diferente");
-  // }
 }
 
 void reconnect()
@@ -45,11 +48,13 @@ void reconnect()
   {
     Serial.println("connected");
     // Once connected, publish an announcement...
-    String resp = getMAC();
-    snprintf(msg, MSG_BUFFER_SIZE, "conect serialNumber: %s", resp);
+    getMAC(serialNumber);
+    snprintf(msg, MSG_BUFFER_SIZE, "conect serialNumber: %s", serialNumber);
     client.publish("status", msg);
     // ... and resubscribe
     // client.subscribe("inTopic");
+    sniprintf(tpc, TPC_BUFFER_SIZE, "device/%s/mensage", serialNumber);
+    client.subscribe(tpc);
   }
   else
   {
@@ -62,11 +67,16 @@ void reconnect()
   // }
 }
 
-void status()
+void status_MQTT()
 {
-  String serialNumber = getMAC();
-  snprintf(msg, MSG_BUFFER_SIZE, "{\"serialNumber\":\"%s\",\"status\":\"ativo\"}", serialNumber); // "{\"trackerId\":%d,\"height\":%d}"
-  snprintf(tpc, TPC_BUFFER_SIZE, "device/%s/status", serialNumber);
-  Serial.println(msg);
-  client.publish(tpc, msg);
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillisStatusMQTT >= 10000)
+  {
+    previousMillisStatusMQTT = currentMillis;
+    getMAC(serialNumber);
+    snprintf(msg, MSG_BUFFER_SIZE, "{\"serialNumber\":\"%s\",\"status\":\"ativo\"}", serialNumber); // "{\"trackerId\":%d,\"height\":%d}"
+    snprintf(tpc, TPC_BUFFER_SIZE, "device/%s/status", serialNumber);
+    // Serial.println(msg);
+    client.publish(tpc, msg);
+  }
 }

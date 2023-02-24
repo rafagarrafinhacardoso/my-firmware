@@ -11,7 +11,8 @@ const char *mqtt_server = "192.168.0.246"; //    192.168.0.246
 #define TPC_BUFFER_SIZE (60)
 char msg[MSG_BUFFER_SIZE];
 char tpc[TPC_BUFFER_SIZE];
-char state[25];
+char serialNumber[32];
+// char state[25];
 
 
 // float AccelX[sizeV];
